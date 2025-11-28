@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+
+# ML Models (trop gros)
+models/*.h5
+*.h5
+
+# Datasets (trop gros)
+Data/
+data/
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
