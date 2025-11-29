@@ -20,3 +20,8 @@ plotly==5.17.0
 # Dépendances additionnelles
 protobuf==3.20.3
 h5py==3.9.0
+#depandance de firebase 
+firebase-admin
+flask-cors
+#dashboard
+streamlit

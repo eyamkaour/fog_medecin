@@ -5,8 +5,8 @@ from tensorflow.keras import layers, models
 
 
 # Charger dataset (exemple CSV pré-traité)
-df_train = pd.read_csv("Data/archive (2)/mitbih_train.csv", header=None)
-df_test  = pd.read_csv("Data/archive (2)/mitbih_test.csv", header=None)
+df_train = pd.read_csv("Data/archive/mitbih_train.csv", header=None)
+df_test  = pd.read_csv("Data/archive/mitbih_test.csv", header=None)
 
 X_train = df_train.iloc[:, :-1].values
 y_train = df_train.iloc[:, -1].values
