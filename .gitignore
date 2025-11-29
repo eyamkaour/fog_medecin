@@ -27,3 +27,7 @@ Thumbs.db
 *.log
 #firebase 
 *.json
+firebase-credentials.json
+*.key
+*.pem
+*.p12
