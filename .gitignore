@@ -25,4 +25,5 @@ Thumbs.db
 
 # Logs
 *.log
-
+#firebase 
+firebase-credentials.json
