@@ -31,3 +31,5 @@ firebase-credentials.json
 *.key
 *.pem
 *.p12
+#fichier sumilateur
+ iot/send_signall.py
