@@ -1,0 +1,392 @@
+[
+    {
+        "id": "f8a7b6c5d4e3f2g1",
+        "type": "tab",
+        "label": "SIMULATEUR FOG ARCHITECTURE",
+        "disabled": false,
+        "info": "Version V4 : IDs entièrement nouveaux et noms de Dashboard nettoyés pour éviter les conflits et les erreurs de chargement."
+    },
+    {
+        "id": "e0d9c8b7a6f5e4d3",
+        "type": "inject",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "▶ ENVOI MANUEL (Contrôle Quota Firestore)",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0.1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 240,
+        "wires": [
+            [
+                "c2b1a09876543210"
+            ]
+        ]
+    },
+    {
+        "id": "c2b1a09876543210",
+        "type": "function",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "Générer Payload ECG + Signes Vitaux Cohérents (Spécialité)",
+        "func": "// ==================================================================\n// LOGIQUE DE GÉNÉRATION DE DONNÉES AVANCÉE\n// Simule une arythmie ventriculaire critique 30% du temps.\n// La SPECIALTY est incluse pour le routage par le Load Balancer.\n// ==================================================================\n\n// Génère un signal ECG de 187 points (similaire à numpy)\nfunction generate_ecg_signal(condition) {\n    const signal_length = 187;\n    const signal = [];\n    \n    for (let i = 0; i < signal_length; i++) {\n        let t = i / signal_length;\n        let value = 0;\n        \n        if (condition === 'normal') {\n            // Forme d'onde normale simplifiée\n            value = (\n                0.5 * Math.sin(2 * Math.PI * 5 * t) + \n                1.0 * Math.exp(-Math.pow((t - 0.2) / 0.05, 2)) + \n                2.0 * Math.exp(-Math.pow((t - 0.4) / 0.03, 2)) - \n                0.8 * Math.exp(-Math.pow((t - 0.6) / 0.07, 2)) \n            );\n        } else { // 'ventricular' ou critique\n            // Forme d'onde arythmie (QRS large)\n            value = (\n                0.3 * Math.sin(2 * Math.PI * 3 * t) + \n                2.5 * Math.exp(-Math.pow((t - 0.3) / 0.08, 2)) - \n                0.4 * Math.exp(-Math.pow((t - 0.7) / 0.1, 2)) + \n                1.2 * Math.exp(-Math.pow((t - 0.5) / 0.05, 2))\n            );\n        }\n\n        // Ajout d'un petit bruit aléatoire\n        value += (Math.random() - 0.5) * 0.1; \n        signal.push(parseFloat(value.toFixed(4))); \n    }\n    return signal;\n}\n\n// Génère des signes vitaux cohérents\nfunction get_vital_signs(condition) {\n    if (condition === 'normal') {\n        return {\n            'heart_rate': Math.floor(Math.random() * (100 - 60) + 60),\n            'temperature': (Math.random() * (37.2 - 36.0) + 36.0).toFixed(1),\n            'spo2': Math.floor(Math.random() * (100 - 95) + 95)\n        };\n    } else { // Condition critique (ventricular)\n        return {\n            'heart_rate': Math.floor(Math.random() * (180 - 140) + 140), \n            'temperature': (Math.random() * (38.5 - 37.0) + 37.0).toFixed(1), \n            'spo2': Math.floor(Math.random() * (95 - 85) + 85) \n        };\n    }\n}\n\n// --- LOGIQUE GLOBALE ---\nconst patient_data = [\n    {id: \"P-001\", name: \"JEAN DUPONT\", specialty: \"general\"},\n    {id: \"P-002\", name: \"MARIE MARTIN\", specialty: \"critical_care\"},\n    {id: \"P-003\", name: \"PIERRE LEROY\", specialty: \"pediatric\"}\n];\n\nconst patient = patient_data[Math.floor(Math.random() * patient_data.length)];\n\n// 30% de chance d'une arythmie critique\nconst condition = Math.random() < 0.7 ? 'normal' : 'ventricular';\n\nconst signal = generate_ecg_signal(condition);\nconst vital_signs = get_vital_signs(condition);\n\nconst alert_status = (condition === 'ventricular') ? \"CRITIQUE\" : \"Normal\";\nconst alert_color = (condition === 'ventricular') ? \"#FF0000\" : \"#008000\"; // Rouge vif ou Vert foncé\n\n// --- CONSTRUCTION DU PAYLOAD FINAL (pour l'API) ---\nmsg.payload = {\n    \"device_id\": \"NODE-RED-DEV-001\",\n    \"patient_id\": patient.id,\n    \"patient_name\": patient.name,\n    \"signal\": signal, \n    \"timestamp\": new Date().toISOString(),\n    \"condition\": condition, \n    \"specialty\": patient.specialty, \n    \"heart_rate\": vital_signs.heart_rate, \n    \"temperature\": vital_signs.temperature, \n    \"spo2\": vital_signs.spo2\n};\n\n// --- SORTIES POUR LA VISUALISATION (Dashboard) ---\nconst msg_temp = { topic: \"temp_final\", payload: vital_signs.temperature, unit: \"°C\" };\nconst msg_spo2 = { topic: \"spo2_final\", payload: vital_signs.spo2, unit: \"%\" };\nconst msg_hr = { topic: \"hr_final\", payload: vital_signs.heart_rate, unit: \"BPM\" };\n\nconst msg_alert = { \n    topic: \"alert_final\", \n    payload: alert_status,\n    color: alert_color\n};\n\nconst msg_ecg_viz = { topic: \"ecg_viz_final\", payload: signal };\n\n// Sortie 1: API | Sortie 2: Temp | Sortie 3: SpO2 | Sortie 4: HR | Sortie 5: Alerte (Texte) | Sortie 6: ECG (Graphe)\nreturn [msg, msg_temp, msg_spo2, msg_hr, msg_alert, msg_ecg_viz];\n",
+        "outputs": 6,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 140,
+        "wires": [
+            [
+                "d9c8b7a6f5e4d3c2",
+                "9043059c183ffd22"
+            ],
+            [
+                "b1a0987654321098"
+            ],
+            [
+                "76543210fedcba98"
+            ],
+            [
+                "7f6e5d4c3b2a1908"
+            ],
+            [
+                "765f4e3d2c1b0a9f"
+            ],
+            [
+                "8e7d6c5b4a392817",
+                "c5e810ba41a100a5",
+                "b4edbabd61fbca73"
+            ]
+        ]
+    },
+    {
+        "id": "d9c8b7a6f5e4d3c2",
+        "type": "http request",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "POST vers Load Balancer (5000)",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:5000/predict",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": "false",
+        "headers": [],
+        "x": 880,
+        "y": 80,
+        "wires": [
+            [
+                "a5b4c3d2e1f09876"
+            ]
+        ]
+    },
+    {
+        "id": "a5b4c3d2e1f09876",
+        "type": "debug",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "Réponse du Load Balancer (JSON)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1130,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "b1a0987654321098",
+        "type": "ui_chart",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "Température Chart",
+        "group": "e3d2c1b0a9876543",
+        "order": 1,
+        "width": "6",
+        "height": 4,
+        "label": "🌡 Température (°C)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "35",
+        "ymax": "50",
+        "removeOlder": "10",
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#ff7f0e",
+            "#aec7e8",
+            "#d62728",
+            "#2ca02c",
+            "#98df8a",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 860,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "76543210fedcba98",
+        "type": "ui_chart",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "SpO2 Chart",
+        "group": "e3d2c1b0a9876543",
+        "order": 2,
+        "width": "6",
+        "height": 4,
+        "label": "🩸 Saturation O₂ (%)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "85",
+        "ymax": "100",
+        "removeOlder": "10",
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 840,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7f6e5d4c3b2a1908",
+        "type": "ui_chart",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "Fréquence Cardiaque Chart",
+        "group": "e3d2c1b0a9876543",
+        "order": 3,
+        "width": "12",
+        "height": 4,
+        "label": "❤ Fréquence Cardiaque (BPM)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "50",
+        "ymax": "200",
+        "removeOlder": "10",
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#d62728",
+            "#ff7f0e",
+            "#aec7e8",
+            "#2ca02c",
+            "#98df8a",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 900,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "765f4e3d2c1b0a9f",
+        "type": "ui_template",
+        "z": "f8a7b6c5d4e3f2g1",
+        "group": "e3d2c1b0a9876543",
+        "name": "Statut Alerte Template",
+        "order": 4,
+        "width": "6",
+        "height": "2",
+        "format": "<div style=\"background-color:{{msg.color}}; color:white; padding:10px; text-align:center; font-size:1.4em; border-radius: 5px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);\">\n    STATUT ACTUEL : <b>{{msg.payload}}</b>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 880,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8e7d6c5b4a392817",
+        "type": "ui_chart",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "ECG Waveform Chart",
+        "group": "e3d2c1b0a9876543",
+        "order": 5,
+        "width": "12",
+        "height": "6",
+        "label": "📈 Forme d'onde ECG (Vue Conceptuelle de l'onde envoyée)",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "En attente du signal...",
+        "dot": false,
+        "ymin": "-3",
+        "ymax": "3",
+        "removeOlder": "",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#2ca02c",
+            "#aec7e8",
+            "#ff7f0e",
+            "#d62728",
+            "#98df8a",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 880,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9043059c183ffd22",
+        "type": "debug",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "debug 8",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "c5e810ba41a100a5",
+        "type": "debug",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "debug 9",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 560,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "b4edbabd61fbca73",
+        "type": "change",
+        "z": "f8a7b6c5d4e3f2g1",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[{\"series\": [\"Onde ECG\"], \"data\": [msg.payload]}]",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 600,
+        "y": 400,
+        "wires": [
+            [
+                "8e7d6c5b4a392817"
+            ]
+        ]
+    },
+    {
+        "id": "e3d2c1b0a9876543",
+        "type": "ui_group",
+        "name": "Visualisation Métriques Vitales Temps Réel",
+        "tab": "c09a75f68b100cd5",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "c09a75f68b100cd5",
+        "type": "ui_tab",
+        "name": "Simulation",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
