@@ -10,7 +10,7 @@
         "id": "e0d9c8b7a6f5e4d3",
         "type": "inject",
         "z": "f8a7b6c5d4e3f2g1",
-        "name": "▶ ENVOI MANUEL (Contrôle Quota Firestore)",
+        "name": "▶️ ENVOI MANUEL",
         "props": [
             {
                 "p": "payload"
@@ -27,8 +27,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 230,
-        "y": 240,
+        "x": 140,
+        "y": 160,
         "wires": [
             [
                 "c2b1a09876543210"
@@ -39,15 +39,16 @@
         "id": "c2b1a09876543210",
         "type": "function",
         "z": "f8a7b6c5d4e3f2g1",
-        "name": "Générer Payload ECG + Signes Vitaux Cohérents (Spécialité)",
-        "func": "// ==================================================================\n// LOGIQUE DE GÉNÉRATION DE DONNÉES AVANCÉE\n// Simule une arythmie ventriculaire critique 30% du temps.\n// La SPECIALTY est incluse pour le routage par le Load Balancer.\n// ==================================================================\n\n// Génère un signal ECG de 187 points (similaire à numpy)\nfunction generate_ecg_signal(condition) {\n    const signal_length = 187;\n    const signal = [];\n    \n    for (let i = 0; i < signal_length; i++) {\n        let t = i / signal_length;\n        let value = 0;\n        \n        if (condition === 'normal') {\n            // Forme d'onde normale simplifiée\n            value = (\n                0.5 * Math.sin(2 * Math.PI * 5 * t) + \n                1.0 * Math.exp(-Math.pow((t - 0.2) / 0.05, 2)) + \n                2.0 * Math.exp(-Math.pow((t - 0.4) / 0.03, 2)) - \n                0.8 * Math.exp(-Math.pow((t - 0.6) / 0.07, 2)) \n            );\n        } else { // 'ventricular' ou critique\n            // Forme d'onde arythmie (QRS large)\n            value = (\n                0.3 * Math.sin(2 * Math.PI * 3 * t) + \n                2.5 * Math.exp(-Math.pow((t - 0.3) / 0.08, 2)) - \n                0.4 * Math.exp(-Math.pow((t - 0.7) / 0.1, 2)) + \n                1.2 * Math.exp(-Math.pow((t - 0.5) / 0.05, 2))\n            );\n        }\n\n        // Ajout d'un petit bruit aléatoire\n        value += (Math.random() - 0.5) * 0.1; \n        signal.push(parseFloat(value.toFixed(4))); \n    }\n    return signal;\n}\n\n// Génère des signes vitaux cohérents\nfunction get_vital_signs(condition) {\n    if (condition === 'normal') {\n        return {\n            'heart_rate': Math.floor(Math.random() * (100 - 60) + 60),\n            'temperature': (Math.random() * (37.2 - 36.0) + 36.0).toFixed(1),\n            'spo2': Math.floor(Math.random() * (100 - 95) + 95)\n        };\n    } else { // Condition critique (ventricular)\n        return {\n            'heart_rate': Math.floor(Math.random() * (180 - 140) + 140), \n            'temperature': (Math.random() * (38.5 - 37.0) + 37.0).toFixed(1), \n            'spo2': Math.floor(Math.random() * (95 - 85) + 85) \n        };\n    }\n}\n\n// --- LOGIQUE GLOBALE ---\nconst patient_data = [\n    {id: \"P-001\", name: \"JEAN DUPONT\", specialty: \"general\"},\n    {id: \"P-002\", name: \"MARIE MARTIN\", specialty: \"critical_care\"},\n    {id: \"P-003\", name: \"PIERRE LEROY\", specialty: \"pediatric\"}\n];\n\nconst patient = patient_data[Math.floor(Math.random() * patient_data.length)];\n\n// 30% de chance d'une arythmie critique\nconst condition = Math.random() < 0.7 ? 'normal' : 'ventricular';\n\nconst signal = generate_ecg_signal(condition);\nconst vital_signs = get_vital_signs(condition);\n\nconst alert_status = (condition === 'ventricular') ? \"CRITIQUE\" : \"Normal\";\nconst alert_color = (condition === 'ventricular') ? \"#FF0000\" : \"#008000\"; // Rouge vif ou Vert foncé\n\n// --- CONSTRUCTION DU PAYLOAD FINAL (pour l'API) ---\nmsg.payload = {\n    \"device_id\": \"NODE-RED-DEV-001\",\n    \"patient_id\": patient.id,\n    \"patient_name\": patient.name,\n    \"signal\": signal, \n    \"timestamp\": new Date().toISOString(),\n    \"condition\": condition, \n    \"specialty\": patient.specialty, \n    \"heart_rate\": vital_signs.heart_rate, \n    \"temperature\": vital_signs.temperature, \n    \"spo2\": vital_signs.spo2\n};\n\n// --- SORTIES POUR LA VISUALISATION (Dashboard) ---\nconst msg_temp = { topic: \"temp_final\", payload: vital_signs.temperature, unit: \"°C\" };\nconst msg_spo2 = { topic: \"spo2_final\", payload: vital_signs.spo2, unit: \"%\" };\nconst msg_hr = { topic: \"hr_final\", payload: vital_signs.heart_rate, unit: \"BPM\" };\n\nconst msg_alert = { \n    topic: \"alert_final\", \n    payload: alert_status,\n    color: alert_color\n};\n\nconst msg_ecg_viz = { topic: \"ecg_viz_final\", payload: signal };\n\n// Sortie 1: API | Sortie 2: Temp | Sortie 3: SpO2 | Sortie 4: HR | Sortie 5: Alerte (Texte) | Sortie 6: ECG (Graphe)\nreturn [msg, msg_temp, msg_spo2, msg_hr, msg_alert, msg_ecg_viz];\n",
+        "name": "Générer Payload ECG + Signes Vitaux ",
+        "func": "// ==================================================================\n// LOGIQUE DE GÉNÉRATION DE DONNÉES AVANCÉE\n// Mise à jour de la fonction generate_ecg_signal pour un ECG plus réaliste.\n// ==================================================================\n\n// Génère un signal ECG de 187 points avec des horodatages\nfunction generate_ecg_signal(condition) {\n    const signal_length = 187;\n    const signal = [];\n    \n    // Fréquence d'échantillonnage: 100 points par seconde (10 ms par point)\n    const sample_rate_ms = 10; \n    const startTime = Date.now() - (signal_length * sample_rate_ms);\n    \n    // Paramètres pour l'échelle de l'ECG (pour le centrer autour de 0 ou une valeur de base)\n    const baseline = 0.0;\n    \n    for (let i = 0; i < signal_length; i++) {\n        let t = i / signal_length; // t varie de 0 à 1 sur le cycle\n        let value = baseline;\n        \n        if (condition === 'normal') {\n            \n            // --- Modèle ECG Normal (Superposition de pics Gaussien) ---\n            \n            // 1. Onde P (Petit pic positif au début, ex: à t=0.1)\n            value += 0.25 * Math.exp(-Math.pow((t - 0.1) / 0.03, 2)); \n\n            // 2. Complexe QRS (Les pics les plus nets et les plus hauts/bas)\n            // Onde Q (Petit pic négatif, ex: à t=0.2)\n            value -= 0.5 * Math.exp(-Math.pow((t - 0.2) / 0.015, 2)); \n            // Onde R (Grand pic positif, ex: à t=0.22)\n            value += 3.0 * Math.exp(-Math.pow((t - 0.22) / 0.02, 2)); \n            // Onde S (Petit pic négatif, ex: à t=0.25)\n            value -= 0.8 * Math.exp(-Math.pow((t - 0.25) / 0.02, 2)); \n\n            // 3. Onde T (Pic positif plus large et moins haut, ex: à t=0.45)\n            value += 0.5 * Math.exp(-Math.pow((t - 0.45) / 0.07, 2)); \n            \n        } else { // 'ventricular' ou critique (Rythme désorganisé / QRS élargi)\n            \n            // --- Modèle Arythmie (QRS large, Onde T et P fusionnées/absentes) ---\n            \n            // QRS élargi et désorganisé, sans P distinct\n            value += 0.5 * Math.sin(2 * Math.PI * 3 * t); // Une base sinusoïdale chaotique\n            \n            // Un pic ventriculaire large et haut (ex: à t=0.3)\n            value += 2.8 * Math.exp(-Math.pow((t - 0.3) / 0.09, 2)); \n            \n            // Un pic large inverse\n            value -= 1.5 * Math.exp(-Math.pow((t - 0.5) / 0.12, 2)); \n\n        }\n\n        // Ajout d'un petit bruit aléatoire (Efficace pour simuler des interférences)\n        value += (Math.random() - 0.5) * 0.1; \n        \n        // Créer un objet {x: timestamp, y: value}\n        signal.push({\n            \"x\": startTime + (i * sample_rate_ms), // Temps en millisecondes\n            \"y\": parseFloat(value.toFixed(4)) // Valeur Y\n        }); \n    }\n    return signal;\n}\n\n// Génère des signes vitaux cohérents (aucune modification ici)\nfunction get_vital_signs(condition) {\n    if (condition === 'normal') {\n        return {\n            'heart_rate': Math.floor(Math.random() * (100 - 60) + 60),\n            'temperature': (Math.random() * (37.2 - 36.0) + 36.0).toFixed(1),\n            'spo2': Math.floor(Math.random() * (100 - 95) + 95)\n        };\n    } else { // Condition critique (ventricular)\n        return {\n            'heart_rate': Math.floor(Math.random() * (180 - 140) + 140), \n            'temperature': (Math.random() * (38.5 - 37.0) + 37.0).toFixed(1), \n            'spo2': Math.floor(Math.random() * (95 - 85) + 85) \n        };\n    }\n}\n\n// --- LOGIQUE GLOBALE (Inchangée) ---\nconst patient_data = [\n    { id: \"P-001\", name: \"JEAN DUPONT\", age: 72, specialty: \"general\" },\n    { id: \"P-002\", name: \"MARIE MARTIN\", age: 45, specialty: \"critical_care\" },\n    { id: \"P-003\", name: \"PIERRE LEROY\", age: 10, specialty: \"pediatric\" },\n    { id: \"P-004\", name: \"Saleh ben saleh\", age: 60, specialty: \"general\" },\n    { id: \"P-005\", name: \"AHMED BEN ALI\", age: 30, specialty: \"critical_care\" }\n];\n\nconst patient = patient_data[Math.floor(Math.random() * patient_data.length)];\nconst condition = Math.random() < 0.7 ? 'normal' : 'ventricular';\n\nconst signal = generate_ecg_signal(condition); \nconst vital_signs = get_vital_signs(condition);\n\nconst alert_status = (condition === 'ventricular') ? \"CRITIQUE\" : \"Normal\";\nconst alert_color = (condition === 'ventricular') ? \"#FF0000\" : \"#008000\";\n\n// --- CONSTRUCTION DES SORTIES ---\nconst msg_temp = { topic: \"temp_final\", payload: vital_signs.temperature, unit: \"°C\" };\nconst msg_spo2 = { topic: \"spo2_final\", payload: vital_signs.spo2, unit: \"%\" };\nconst msg_hr = { topic: \"hr_final\", payload: vital_signs.heart_rate, unit: \"BPM\" };\n\nconst msg_alert = { \n    topic: \"alert_final\", \n    payload: alert_status,\n    color: alert_color\n};\n\n// Payload pour l'API (contient tous les détails)\nmsg.payload = {\n    \"device_id\": \"NODE-RED-DEV-001\",\n    \"patient_id\": patient.id,\n    \"patient_name\": patient.name,\n    \"patient_age\": patient.age,\n    \n    // Note: Pour l'API/DB, on peut choisir d'envoyer le tableau de valeurs brutes\n    // Si l'API attend un tableau de nombres, on doit extraire le 'y' de chaque point.\n    // Laissez-le tel quel si l'API est conçue pour accepter {x, y} ou ajustez si besoin.\n    \"signal\": signal.map(p => p.y), // Envoie juste les valeurs 'y' pour la base de données\n    \"timestamp\": new Date().toISOString(),\n    \"condition\": condition, \n    \"specialty\": patient.specialty, \n    \"heart_rate\": vital_signs.heart_rate, \n    \"temperature\": vital_signs.temperature, \n    \"spo2\": vital_signs.spo2\n};\n\n// Payload pour la visualisation (ui_chart)\nconst msg_ecg_viz = { \n    topic: \"ecg_viz_final\", \n    payload: [\n        {\n            \"series\": [patient.name + \" ECG\"],\n            \"data\": [\n                signal // Le tableau d'objets {x, y}\n            ],\n            \"labels\": [\"\"]\n        }\n    ]\n};\n\nreturn [msg, msg_temp, msg_spo2, msg_hr, msg_alert, msg_ecg_viz];",
         "outputs": 6,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
-        "y": 140,
+        "x": 430,
+        "y": 160,
         "wires": [
             [
                 "d9c8b7a6f5e4d3c2",
@@ -67,8 +68,7 @@
             ],
             [
                 "8e7d6c5b4a392817",
-                "c5e810ba41a100a5",
-                "b4edbabd61fbca73"
+                "c5e810ba41a100a5"
             ]
         ]
     },
@@ -109,8 +109,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1130,
-        "y": 120,
+        "x": 1080,
+        "y": 140,
         "wires": []
     },
     {
@@ -122,7 +122,7 @@
         "order": 1,
         "width": "6",
         "height": 4,
-        "label": "🌡 Température (°C)",
+        "label": "🌡️ Température (°C)",
         "chartType": "line",
         "legend": "false",
         "xformat": "HH:mm:ss",
@@ -151,8 +151,8 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 860,
-        "y": 240,
+        "x": 870,
+        "y": 220,
         "wires": [
             []
         ]
@@ -195,8 +195,8 @@
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 840,
-        "y": 300,
+        "x": 850,
+        "y": 280,
         "wires": [
             []
         ]
@@ -210,7 +210,7 @@
         "order": 3,
         "width": "12",
         "height": 4,
-        "label": "❤ Fréquence Cardiaque (BPM)",
+        "label": "❤️ Fréquence Cardiaque (BPM)",
         "chartType": "line",
         "legend": "false",
         "xformat": "HH:mm:ss",
@@ -240,7 +240,7 @@
         "useDifferentColor": false,
         "className": "",
         "x": 900,
-        "y": 360,
+        "y": 340,
         "wires": [
             []
         ]
@@ -278,14 +278,14 @@
         "label": "📈 Forme d'onde ECG (Vue Conceptuelle de l'onde envoyée)",
         "chartType": "line",
         "legend": "true",
-        "xformat": "auto",
+        "xformat": "HH:mm:ss",
         "interpolate": "linear",
         "nodata": "En attente du signal...",
         "dot": false,
-        "ymin": "-3",
-        "ymax": "3",
+        "ymin": "-1.5",
+        "ymax": "3.5",
         "removeOlder": "",
-        "removeOlderPoints": "",
+        "removeOlderPoints": "374",
         "removeOlderUnit": "1",
         "cutout": "",
         "useOneColor": false,
@@ -305,7 +305,7 @@
         "useDifferentColor": false,
         "className": "",
         "x": 880,
-        "y": 500,
+        "y": 460,
         "wires": [
             []
         ]
@@ -339,36 +339,9 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 560,
-        "y": 340,
+        "x": 620,
+        "y": 380,
         "wires": []
-    },
-    {
-        "id": "b4edbabd61fbca73",
-        "type": "change",
-        "z": "f8a7b6c5d4e3f2g1",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "[{\"series\": [\"Onde ECG\"], \"data\": [msg.payload]}]",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 600,
-        "y": 400,
-        "wires": [
-            [
-                "8e7d6c5b4a392817"
-            ]
-        ]
     },
     {
         "id": "e3d2c1b0a9876543",
@@ -386,6 +359,7 @@
         "type": "ui_tab",
         "name": "Simulation",
         "icon": "dashboard",
+        "order": 2,
         "disabled": false,
         "hidden": false
     }
